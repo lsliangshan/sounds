@@ -128,27 +128,8 @@ export default {
       // }, 300)
     },
     onChange (e) {
-      let oldIndex = Number(e.moved.oldIndex)
-      let newIndex = Number(e.moved.newIndex)
-      if (oldIndex === newIndex) return
-      if ((newIndex !== 0) && (newIndex % 2 === 0)) {
-        newIndex /= 2
-      }
-      if ((oldIndex !== 0) && (oldIndex % 2 === 0)) {
-        oldIndex /= 2
-      }
-      let images = JSON.parse(JSON.stringify(this.images))
-      if (oldIndex > newIndex) {
-        // 向左移
-        let _item = this.images.splice(oldIndex, 1)
-        this.images.splice(newIndex, 0, ..._item)
-      } else if (oldIndex < newIndex) {
-        // 向右移
-        this.images.splice(newIndex, 0, ...this.images.splice(oldIndex, 1))
-      }
-      setTimeout(() => {
-        this.refreshRenderImages()
-      }, 300)
+      let oldIndex = Number(e.oldIndex)
+      // this.ima
       console.log('change', e)
     },
     fileChanged (e) {
