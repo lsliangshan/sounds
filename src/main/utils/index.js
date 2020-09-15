@@ -45,7 +45,7 @@ export function walks (dirs, type) {
     let _filter = ''
     switch (type) {
       case 'image':
-        _filter = '(*.jpg)|(*.png)|(*.jpeg)|(*.bmp)'
+        _filter = '(*.jpg)|(*.png)|(*.jpeg)|(*.bmp)|(*.gif)'
         break
       case 'audio':
         _filter = '(*.wav)|(*.m3u)|(*.mp3)|(*.flac)'

@@ -30,6 +30,20 @@ export default {
         .replace('hh', hour)
         .replace('mm', minute)
         .replace('ss', second)
+    },
+    $limitInputNumber (e) {
+      /**
+         * 限制输入类型  只能为 number
+         */
+      var et = e || window.event
+      var keycode = et.charCode || et.keyCode
+      if ((keycode > 57 || keycode < 48) && keycode !== 8 && keycode !== 37 && keycode !== 39 && keycode !== 9) {
+        if (window.event) {
+          window.event.returnValue = false
+        } else {
+          e.preventDefault() // for firefox
+        }
+      }
     }
   }
 }

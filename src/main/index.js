@@ -5,6 +5,7 @@ import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 require('./dependence')
 require('./file')
+require('./video')
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
@@ -17,7 +18,7 @@ protocol.registerSchemesAsPrivileged([
 function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 800,
+    width: 1040,
     height: 600,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
@@ -26,6 +27,7 @@ function createWindow () {
       // javascript: true,
       // plugins: true,
       nodeIntegration: true, // 是否集成 Nodejs
+      webSecurity: false,
       // webSecurity: false,
       preload: './preload.js'
     }

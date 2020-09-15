@@ -44,4 +44,44 @@ body {
     border: none !important;
   }
 }
+.no-border {
+  .ivu-select-selection {
+    border: none;
+    box-shadow: none !important;
+  }
+  .ivu-input {
+    border-color: transparent;
+    box-shadow: none !important;
+  }
+}
+.transition-item-separator-select {
+  .ivu-select-arrow {
+    opacity: 0;
+  }
+  &:hover {
+    .ivu-select-arrow {
+      opacity: 1;
+    }
+  }
+}
+.transition-item-separator-input {
+  .ivu-input {
+    border-color: transparent;
+    background-color: transparent;
+    &:focus {
+      border-color: transparent !important;
+    }
+    &:focus {
+      border-color: #dcdee2 !important;
+    }
+  }
+  &:hover {
+    .ivu-input {
+      border-color: #dcdee2 !important;
+      &:focus {
+        border-color: #dcdee2 !important;
+      }
+    }
+  }
+}
 </style>

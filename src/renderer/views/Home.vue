@@ -10,7 +10,7 @@
             <Step :data-index="0"
                   title="选择素材"></Step>
             <Step :data-index="1"
-                  title="配置参数"></Step>
+                  title="选择音频"></Step>
             <Step :data-index="2"
                   title="生成视频"></Step>
           </Steps>
@@ -24,6 +24,18 @@
                   style="font-size: 12px; margin-top: 10px; margin-left: 25px;"
                   v-text="'上一步'"
                   :style="{opacity: currentStep > 0 ? 1 : 0, pointerEvents: currentStep > 0 ? 'auto' : 'none'}"></Button>
+        </div>
+        <div class="home_container_header">
+          <div class="home_container_header_item">
+            <div class="home_container_header_item_left">
+              <Icon type="ios-musical-notes"
+                    size="20"
+                    color="#66c18c" />
+            </div>
+            <div class="home_container_header_item_right">
+
+            </div>
+          </div>
         </div>
         <div class="home_container_content">
           <!-- v-model="renderImages" -->
@@ -44,7 +56,7 @@
                 <div class="list-group-item"
                      v-if="item.src">
                   <div class="item_top">
-                    <div class="item_top_left">{{index + 1}}</div>
+                    <div class="item_top_left">{{index / 2 + 1}}</div>
                     <div class="item_top_right"
                          @click="removeItem(index)">
                       <Icon type="md-trash"
@@ -56,12 +68,54 @@
                     <img :src="item.src"
                          alt="">
                   </div>
-                  <div class="item_bottom"
-                       v-text="$timeFormat(item.duration, 'mm:ss')"></div>
+                  <div class="item_bottom">
+                    <div class="transition-item-separator-label"
+                         style="width: 110px; color: #888;">持续(ms):</div>
+                    <Input size="small"
+                           type="text"
+                           :number="true"
+                           placeholder="1500"
+                           class=" no-border transition-item-separator-input"
+                           @on-keydown="$limitInputNumber"
+                           v-model="item.duration">
+                    </Input>
+                  </div>
+                  <!-- <div class="item_bottom"
+                       v-text="$timeFormat(item.duration, 'mm:ss')"></div> -->
                 </div>
                 <div v-else
                      :key="item.id"
-                     style="width: 80px; height: 150px; background-color: red; pointer-events: none;"></div>
+                     @mouseleave="resetTransition(item)"
+                     class="no-border transition-item-separator">
+                  <div class="transition-item-separator-label">动画类型</div>
+                  <Select v-model="item.name"
+                          size="small"
+                          class="transition-item-separator-select">
+                    <Option v-for="itm in allAnimations"
+                            :value="itm"
+                            class="transition-item"
+                            :data-value="itm"
+                            :data-id="item.id"
+                            :key="itm">{{ itm }}</Option>
+                  </Select>
+                  <div class="transition-item-separator-label">过渡时间（毫秒）</div>
+                  <Input size="small"
+                         type="text"
+                         :number="true"
+                         placeholder="1500"
+                         class="transition-item-separator-input"
+                         @on-keydown="$limitInputNumber"
+                         v-model="item.duration">
+                  </Input>
+                  <transition name="fade">
+                    <div class="transition_previewer"
+                         v-if="currentTransitionId == item.id">
+                      <img :src="`http://img09.zhaopin.com/2012/other/mobile/weex/rpo/gl/o_${currentTransitionName}.glsl.mp4.gif`"
+                           :alt="currentTransitionName">
+                      <div class="transition_previewer_text">{{currentTransitionName}}</div>
+                    </div>
+                  </transition>
+                </div>
               </div>
             </transition-group>
           </draggable>
@@ -73,14 +127,14 @@
 
 <script>
 import { ipcRenderer, nativeImage } from 'electron'
-import { Step, Steps, Icon, Button } from 'view-design'
+import { Step, Steps, Icon, Button, Select, Option, Input } from 'view-design'
 import draggable from 'vuedraggable'
 export default {
   name: 'Home',
   components: {
     FileDrop: () => import('@/components/FileDrop'),
     draggable,
-    Step, Steps, Icon, Button
+    Step, Steps, Icon, Button, Select, Option, Input
   },
   data () {
     return {
@@ -95,12 +149,20 @@ export default {
       },
       transitions: [
       ],
+      audios: [], // 背景音乐
       renderImages: [],
-      activeNames: ''
+      activeNames: '',
+      currentTransitionId: '',
+      currentTransitionName: ''
     }
   },
   mounted () {
     ipcRenderer.on('response-get-files', this.getFiles)
+    ipcRenderer.on('response-gen-video', this.genVideoResponse)
+
+    setTimeout(() => {
+      this.initItemEvent()
+    }, 100)
   },
   watch: {
     images: {
@@ -121,6 +183,24 @@ export default {
     }
   },
   methods: {
+    initItemEvent () {
+      let items = document.querySelectorAll('.transition-item')
+      for (let i = 0; i < items.length; i++) {
+        items[i].addEventListener('mouseenter', () => {
+          this.transitionHover(items[i].dataset)
+        }, false)
+      }
+    },
+    transitionHover (data) {
+      this.currentTransitionId = data.id
+      this.currentTransitionName = data.value
+    },
+    resetTransition (data) {
+      if (this.currentTransitionId == data.id) {
+        this.currentTransitionId = ''
+        this.currentTransitionName = ''
+      }
+    },
     onEnd (e) {
       console.log('on end: ', e)
       // setTimeout(() => {
@@ -160,17 +240,15 @@ export default {
     getFiles (e, data) {
       let c = this.images.length
       this.images = data.map(item => ({
+        path: item,
         src: nativeImage.createFromPath(item).toDataURL(),
-        duration: 3000 + Math.floor(Math.random() * 1000),
-        animation: this.allAnimations[0],
-        transitionTime: 1500,
+        duration: 5000,
         status: true,
         id: this.$getUUID()
       })).concat(this.images)
-
       let transitions = data.map(item => ({
-        animation: this.allAnimations[0],
-        transitionTime: 1500,
+        name: this.allAnimations[0],
+        duration: 1500,
         status: false,
         id: this.$getUUID()
       }))
@@ -199,7 +277,12 @@ export default {
       return draggedElement.status
     },
     removeItem (index) {
-      this.images.splice(index, 1)
+      let _imageIndex = index / 2
+      let _transitionIndex = Math.min(this.transitions.length - 1, index / 2)
+      this.images.splice(_imageIndex, 1)
+      this.transitions.splice(_transitionIndex, 1)
+      console.log(_imageIndex, _transitionIndex)
+      this.refreshRenderImages()
     },
     setStep (e) {
       if (e.target.classList.contains('ivu-steps-item')) {
@@ -208,6 +291,22 @@ export default {
     },
     nextStep () {
       this.currentStep = Math.min(2, this.currentStep + 1)
+      if (this.currentStep > 1) {
+        // 生成视频
+        console.log('生成视频')
+        ipcRenderer.send('gen-video', {
+          images: this.images.map(item => {
+            item.src = ''
+            item.size = '1000x564'
+            return item
+          }),
+          transitions: this.transitions,
+          audios: this.audios || []
+        })
+      }
+    },
+    genVideoResponse (e, data) {
+      console.log('=======', data)
     },
     prevStep () {
       this.currentStep = Math.max(0, this.currentStep - 1)
@@ -231,11 +330,33 @@ export default {
     position: relative;
     width: 100%;
     height: 100%;
+    &_header {
+      width: 100%;
+      height: 48px;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 0 15px;
+      box-sizing: border-box;
+      &_item {
+        height: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        &_left {
+        }
+        &_right {
+          margin-left: 8px;
+        }
+      }
+    }
     &_content {
       width: calc(100% - 130px);
-      height: 100%;
+      height: calc(100% - 48px);
       padding: 10px;
       box-sizing: border-box;
+      overflow-y: auto;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
@@ -394,5 +515,51 @@ export default {
   opacity: 0.5;
   transform: scale3d(0.8, 0.8, 1) !important;
   // background: #c8ebfb;
+}
+.transition-item-separator {
+  position: relative;
+  width: 120px;
+  height: 150px;
+  background-color: transparent;
+  pointer-events: auto;
+  &-label {
+    text-align: left;
+    padding-left: 5px;
+    font-size: 13px;
+    color: #c8c8c8;
+    margin-bottom: 8px;
+    margin-top: 8px;
+  }
+  &-select {
+    text-align: left;
+  }
+}
+.transition_previewer {
+  position: absolute;
+  left: 140px;
+  top: 30px;
+  width: 150px;
+  height: 150px;
+  background-color: #121212;
+  // border: 1px solid #c8c8c8;
+  padding: 1px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  &_text {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 30px;
+    background-color: #121212;
+    color: #c8c8c8;
+  }
 }
 </style>
