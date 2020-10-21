@@ -8,6 +8,25 @@ const ffmpeg = require('fluent-ffmpeg')
 // const concat = require('ffmpeg-concat')
 const path = require('path')
 
+const animations = [
+  'ButterflyWaveScrawler.glsl',
+  'GlitchDisplace.glsl',
+  'Mosaic.glsl',
+  'SimpleZoom.glsl',
+  'Swirl.glsl',
+  'crosswarp.glsl',
+  'kaleidoscope.glsl',
+  'multiply_blend.glsl',
+  'swap.glsl',
+  'tangentMotionBlur.glsl',
+
+  'doorway.glsl',
+  'fadegrayscale.glsl',
+  'ZoomInCircles.glsl',
+  'circle.glsl',
+  'cube.glsl'
+]
+
 function imageToVideo (args) {
   console.log(os.tmpdir())
   return new Promise(async (resolve, reject) => {
@@ -21,11 +40,16 @@ function imageToVideo (args) {
     // exec(cmdStr, () => {
     //   resolve(path.resolve(os.tmpdir(), 'enkel' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4')))
     // })
-    ffmpeg(args.path).size(args.size || '640x?').autopad(args.autopad || 'black').videoCodec('libx264').audioBitrate(128).format(args.format || 'mp4').loop(args.duration ? (args.duration / 1000) : 5).fps(args.hasOwnProperty('fps') ? args.fps : 30).outputOptions(['-pix_fmt yuv420p', `-vf scale=${args.size ? args.size.replace(/x/, ':') : '640:480'}`]).on('error', (err) => {
+    ffmpeg(args.path).size(args.size || '640x?').autopad(args.autopad || 'black').videoCodec('libx264').audioBitrate(128).format(args.format || 'mp4').loop(args.duration ? (args.duration / 1000) : 10).fps(args.hasOwnProperty('fps') ? args.fps : 30).outputOptions(['-pix_fmt yuv420p', `-vf scale=${args.size ? args.size.replace(/x/, ':') : '640:480'}`]).on('error', (err) => {
       console.log('.......', err)
       resolve('')
     }).on('end', () => {
-      resolve(path.resolve(os.tmpdir(), 'enkel' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4')))
+      // exec(`ffmpeg -i ${path.resolve(os.tmpdir(), 'enkel' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4'))} -filter_complex "[0]split[v0][v1];[v0]trim=0:2[t0];[v1]trim=2:9[t1];[t1]setpts=PTS-STARTPTS[tt1];[t0][tt1]gltransition=duration=7:source=${__static}/static/transitions/tangentMotionBlur.glsl[t];[t]concat=n=1" -pix_fmt yuv420p ${path.resolve(os.tmpdir(), 'enkel2' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4'))}`, () => {
+      exec(`ffmpeg -i ${path.resolve(os.tmpdir(), 'enkel' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4'))} -filter_complex "[0]split[v0][v1];[v0]trim=0:2[t0];[v1]trim=2:9[t1];[t1]setpts=PTS-STARTPTS[tt1];[t0][tt1]gltransition=duration=7:source=${__static}/static/transitions/${animations[Math.floor(Math.random() * animations.length)]}[t];[t]concat=n=1" -pix_fmt yuv420p ${path.resolve(os.tmpdir(), 'enkel2' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4'))}`, () => {
+        resolve(path.resolve(os.tmpdir(), 'enkel2' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4')))
+      })
+      // console.log('++++++', path.resolve(os.tmpdir(), 'enkel' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4')))
+      // resolve(path.resolve(os.tmpdir(), 'enkel' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4')))
     }).save(path.resolve(os.tmpdir(), 'enkel' + path.sep + fn + '-' + ts + '.' + (args.format || 'mp4')))
   })
 }
@@ -45,7 +69,7 @@ ipcMain.on('gen-video', async (event, data) => {
     for (let i = 0; i < res.length; i++) {
       cmdStr += ` -i ${res[i]} `
     }
-    cmdStr += `  -stream_loop -1 -i ${data.audios[0] || '/private/var/folders/6z/yyk4dr6x1yzd_3kpxc1p5lmr0000gn/T/enkel/neq.mp3'} -acodec aac`
+    cmdStr += `  -stream_loop -1 -i ${data.audios[0] || '/Users/liangshan/workspace/c_node/cnode/resource/neq.mp3'} -acodec aac`
     // cmdStr += `  -stream_loop -1 -i /private/var/folders/6z/yyk4dr6x1yzd_3kpxc1p5lmr0000gn/T/enkel/neq.mp3 -acodec aac`
     cmdStr += ` -filter_complex "`
     let arr = []

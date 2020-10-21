@@ -242,7 +242,7 @@ export default {
       this.images = data.map(item => ({
         path: item,
         src: nativeImage.createFromPath(item).toDataURL(),
-        duration: 5000,
+        duration: 10000,
         status: true,
         id: this.$getUUID()
       })).concat(this.images)
